@@ -80,7 +80,7 @@ CCProgram standard-fs %{
   precision highp float;
   // 1. surface internal macros, for technique usage or remapping some user (material) macros to surface internal macros
   #include <surfaces/effect-macros/common-macros>
-
+  #define FrontFacing true
 
   // 2. common include with corresponding shader stage, include before surface functions
   #include <surfaces/includes/common-fs>
@@ -100,7 +100,7 @@ CCProgram standard-fs %{
 
 
   #include <shaders/material/gpu_shader_material_mix_color>
-
+  #include <shaders/material/gpu_shader_material_layer_weight>
   // 6. shader entry with corresponding shader stage and technique usage/type
   layout(location = 0) out vec4 fragColorX;
 
@@ -119,7 +119,7 @@ CCProgram standard-fs %{
     
     
       // Fog factor
-      float fogFactor = 0.5;
+      // float fogFactor = 0.5;
       // Lighting
       LightingResult lightingResult;
       CCSurfacesLighting(lightingResult, surfaceData, shadowBias);
@@ -128,8 +128,15 @@ CCProgram standard-fs %{
       // Shading
       vec4 color = CCSurfacesShading(surfaceData, lightingResult);
     #endif
+    vec3 v_normal = FSInput_worldNormal.xyz;
+    vec3 worldPos = FSInput_worldPos;
+
+    vec3 v_viewDir = normalize(cc_cameraPos.xyz - worldPos.xyz);
+    float fresnel,outFacing;
+    node_layer_weight(0.8,v_normal,v_viewDir,fresnel,outFacing);
+
     vec4 mixColor;
-    node_mix_blend(factor, color1, color2, mixColor);
+    node_mix_blend(outFacing, color1, color2, mixColor);
     vec4 multColor;
     node_mix_mult(color.x, mixColor, vec4(0.225,0.225,0.225,1.0), multColor);
 

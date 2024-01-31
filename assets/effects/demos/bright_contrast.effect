@@ -33,11 +33,6 @@ CCProgram surface-vertex %{
   {
     return In.worldNormal.xyz;
   }
-  
-  #define CC_SURFACES_VERTEX_MODIFY_UV
-  void SurfacesVertexModifyUV(inout SurfacesStandardVertexIntermediate In)
-  {
-  }
 }%
 
 
@@ -105,32 +100,38 @@ CCProgram standard-fs %{
   layout(location = 0) out vec4 fragColorX;
 
   void main()  {
-    #if CC_DISABLE_STRUCTURE_IN_FRAGMENT_SHADER
-      //获取基本颜色和透明度，用户可用宏替换
-      vec4 color = SurfacesFragmentModifyBaseColorAndTransparency();
-    #else
-      // Surface
-      SurfacesMaterialData surfaceData;
-      CCSurfacesFragmentGetMaterialData(surfaceData);
+    // Surface
+    SurfacesMaterialData surfaceData;
+    CCSurfacesFragmentGetMaterialData(surfaceData);
+  
+    // Shadow parameters
+    vec2 shadowBias = vec2(0.0);
+    vec3 colDebugCSMLayer = vec3(1.0);
+  
+  
+    // Fog factor
+    float fogFactor = 1.0;
+    // Lighting
+    LightingResult lightingResult;
+    CCSurfacesLighting(lightingResult, surfaceData, shadowBias);
+  
+  
+    // Shading
+    vec4 color = CCSurfacesShading(surfaceData, lightingResult);
+    vec3 v_normal = FSInput_worldNormal.xyz;
+    vec3 worldPos = FSInput_worldPos;
+
+    vec3 v_viewDir = normalize(cc_cameraPos.xyz - worldPos.xyz);
+
+    // 计算面向角度
+    float facingRatio = dot(v_normal, v_viewDir);
+
+    // 模拟 Color Ramp 效果
+    // 实际上应该根据具体的颜色斜坡来计算颜色
+    vec4 mixColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(0.0, 0.0, 0.0, 1.0), facingRatio);
+    vec4 outColor;
     
-      // Shadow parameters
-      vec2 shadowBias = vec2(0.0);
-      vec3 colDebugCSMLayer = vec3(1.0);
-    
-    
-      // Fog factor
-      float fogFactor = 1.0;
-      // Lighting
-      LightingResult lightingResult;
-      CCSurfacesLighting(lightingResult, surfaceData, shadowBias);
-    
-    
-      // Shading
-      vec4 color = CCSurfacesShading(surfaceData, lightingResult);
-    #endif
-    vec4 mixColor;
-    
-    brightness_contrast(mainColor, bright, contrast, mixColor);
-    fragColorX = color * mixColor;
+    brightness_contrast(mainColor, bright, contrast, outColor);
+    fragColorX = color * outColor;
   }
 }%
