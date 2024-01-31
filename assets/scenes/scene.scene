@@ -139,7 +139,7 @@
       "a": 255
     },
     "_useColorTemperature": true,
-    "_colorTemperature": 7500,
+    "_colorTemperature": 15000,
     "_staticSettings": {
       "__id__": 4
     },

@@ -200,14 +200,14 @@ CCProgram standard-fs %{
 
     vec2 mulBias = vec2(1.0, 0.0); // 乘法因子和偏置值
     vec4 color2 = vec4(1.0, 1.0, 1.0, 1.0); // 黑色
-    vec4 color1 = vec4(0.8, 0.4, 0.3, 1.0); // 白色
+    vec4 color1 = vec4(0.8, 0.5, 0.4, 1.0); // 白色
 
     vec4 outColor; // 用于存储输出颜色的变量
     float outAlpha; // 用于存储输出颜色透明度的变量
     valtorgb_opti_linear(color.x,mulBias,color1,color2,outColor,outAlpha);
 
     vec4 mixColor;
-    node_mix_mult(1.0, vec4(0.784,0.665,0.631,1.0),outColor, mixColor);
+    node_mix_mult(1.0, vec4(0.98,0.940,0.831,1.0),outColor, mixColor);
 
     fragColorX = mixColor;
   }
