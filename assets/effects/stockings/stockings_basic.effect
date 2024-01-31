@@ -1,0 +1,138 @@
+// Effect Syntax Guide: https://docs.cocos.com/creator/manual/zh/shader/index.html
+
+CCEffect %{
+  techniques:
+  - name: opaque
+    passes:
+    - vert: standard-vs
+      frag: standard-fs
+      properties: &props
+        factor:                    { value: 0.0, editor: { slide: true, range: [0, 1.0], step: 0.001 } }
+        color1:                    { value: [1.0, 1.0, 1.0, 1.0], editor: { displayName: Color1, type: color } }
+        color2:                    { value: [1.0, 1.0, 1.0, 1.0], editor: { displayName: Color2, type: color } }
+  }%
+
+
+CCProgram shared-ubos %{
+  uniform Constants {
+    vec4 color1;
+    vec4 color2;
+    float factor;
+  };
+}%
+
+CCProgram surface-vertex %{
+  #define CC_SURFACES_VERTEX_MODIFY_WORLD_POS
+  vec3 SurfacesVertexModifyWorldPos(in SurfacesStandardVertexIntermediate In)
+  {
+    return In.worldPos;
+  }
+  
+  #define CC_SURFACES_VERTEX_MODIFY_WORLD_NORMAL
+  vec3 SurfacesVertexModifyWorldNormal(in SurfacesStandardVertexIntermediate In)
+  {
+    return In.worldNormal.xyz;
+  }
+  
+  #define CC_SURFACES_VERTEX_MODIFY_UV
+  void SurfacesVertexModifyUV(inout SurfacesStandardVertexIntermediate In)
+  {
+  }
+}%
+
+
+CCProgram surface-fragment %{
+  #define CC_SURFACES_FRAGMENT_MODIFY_BASECOLOR_AND_TRANSPARENCY
+  vec4 SurfacesFragmentModifyBaseColorAndTransparency()
+  {
+    vec4 baseColor = vec4(1.0);
+    return baseColor;
+  }
+}%
+
+CCProgram standard-vs %{
+  precision highp float;
+
+  // 1. surface internal macros, for technique usage or remapping some user (material) macros to surface internal macros
+  #include <surfaces/effect-macros/common-macros>
+
+  // 2. common include with corresponding shader stage, include before surface functions
+  #include <surfaces/includes/common-vs>
+
+  // 3. user surface functions that can use user (effect) parameters (ubo Constants)
+  //    see surfaces/default-functions/xxx.chunk
+  #include <shared-ubos>
+  #include <surface-vertex>
+
+  // 4. surface include with corresponding shader stage and shading-model (optional)
+  #include <surfaces/includes/standard-vs>
+
+  // 5. shader entry with corresponding shader stage and technique usage/type
+  #include <shading-entries/main-functions/render-to-scene/vs>
+}%
+
+CCProgram standard-fs %{
+  // shading-model : standard
+  // lighting-model : standard (isotropy / anisotropy pbr)
+  // shader stage : fs
+  // technique usage/type : render-to-scene
+
+  precision highp float;
+  // 1. surface internal macros, for technique usage or remapping some user (material) macros to surface internal macros
+  #include <surfaces/effect-macros/common-macros>
+
+
+  // 2. common include with corresponding shader stage, include before surface functions
+  #include <surfaces/includes/common-fs>
+
+  // 3. user surface functions that can use user (effect) parameters (ubo Constants)
+  //    see surfaces/default-functions/xxx.chunk
+  #include <shared-ubos>
+  #include <surface-fragment>
+
+  // 4. lighting-model (optional)
+  #include <lighting-models/includes/standard>
+
+  // 5. surface include with corresponding shader stage and shading-model (optional)
+  #include <surfaces/data-structures/standard>
+  #include <surfaces/default-functions/standard-fs>
+  #include <surfaces/module-functions/standard-fs>
+
+
+  #include <shaders/material/gpu_shader_material_mix_color>
+
+  // 6. shader entry with corresponding shader stage and technique usage/type
+  layout(location = 0) out vec4 fragColorX;
+
+  void main()  {
+    #if CC_DISABLE_STRUCTURE_IN_FRAGMENT_SHADER
+      //获取基本颜色和透明度，用户可用宏替换
+      vec4 color = SurfacesFragmentModifyBaseColorAndTransparency();
+    #else
+      // Surface
+      SurfacesMaterialData surfaceData;
+      CCSurfacesFragmentGetMaterialData(surfaceData);
+    
+      // Shadow parameters
+      vec2 shadowBias = vec2(0.0);
+      vec3 colDebugCSMLayer = vec3(1.0);
+    
+    
+      // Fog factor
+      float fogFactor = 0.5;
+      // Lighting
+      LightingResult lightingResult;
+      CCSurfacesLighting(lightingResult, surfaceData, shadowBias);
+    
+    
+      // Shading
+      vec4 color = CCSurfacesShading(surfaceData, lightingResult);
+    #endif
+    vec4 mixColor;
+    node_mix_blend(factor, color1, color2, mixColor);
+    vec4 multColor;
+    node_mix_mult(color.x, mixColor, vec4(0.225,0.225,0.225,1.0), multColor);
+
+    fragColorX = multColor;
+  }
+}%
