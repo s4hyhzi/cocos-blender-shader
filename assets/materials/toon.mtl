@@ -84,8 +84,43 @@
     }
   ],
   "_props": [
-    {},
-    {},
+    {
+      "lineWidth": 4.4
+    },
+    {
+      "mainColor": {
+        "__type__": "cc.Color",
+        "r": 189,
+        "g": 143,
+        "b": 143,
+        "a": 255
+      },
+      "shadeColor1": {
+        "__type__": "cc.Color",
+        "r": 184,
+        "g": 93,
+        "b": 93,
+        "a": 255
+      },
+      "specular": {
+        "__type__": "cc.Color",
+        "r": 241,
+        "g": 74,
+        "b": 74,
+        "a": 76
+      },
+      "baseStep": 0.6,
+      "baseFeather": -0.199,
+      "shadeStep": 0.7,
+      "shadeFeather": 0.201,
+      "shadowCover": 0.58,
+      "emissiveScale": {
+        "__type__": "cc.Vec3",
+        "x": 1.5,
+        "y": 5.4,
+        "z": -2.5
+      }
+    },
     {},
     {},
     {},

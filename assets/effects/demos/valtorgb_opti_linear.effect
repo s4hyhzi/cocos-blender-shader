@@ -135,12 +135,17 @@ CCProgram standard-fs %{
     vec3 v_viewDir = normalize(cc_cameraPos.xyz - worldPos.xyz);
     float fresnel,outFacing;
     node_layer_weight(0.8,v_normal,v_viewDir,fresnel,outFacing);
+    vec2 mulBias = vec2(1.0, 0.0); // 乘法因子和偏置值
+    vec4 color1 = vec4(0.0, 0.0, 0.0, 1.0); // 黑色
+    vec4 color2 = vec4(1.0, 1.0, 1.0, 1.0); // 白色
 
-    vec4 mixColor = vec4(0.08,0.051,0.043,1.0);
-    node_mix_blend(outFacing, color1, color2, mixColor);
-    vec4 multColor;
-    node_mix_mult(color.x, mixColor, vec4(0.225,0.225,0.225,1.0), multColor);
+    vec4 outColor; // 用于存储输出颜色的变量
+    float outAlpha; // 用于存储输出颜色透明度的变量
+    valtorgb_opti_linear(outFacing,mulBias,color1,color2,outColor,outAlpha);
 
-    fragColorX = multColor;
+    vec4 mixColor;
+    node_mix_blend(outColor.x, vec4(0.031,0.020,0.017,1.0), vec4(0.2,0.2,0.2,1.0), mixColor);
+
+    fragColorX = mixColor * color;
   }
 }%
